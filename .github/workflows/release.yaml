@@ -42,11 +42,11 @@ jobs:
           git push origin main
 
       - name: Build
-        run: make -C peek_tree/src
+        run: make -C ./src
 
       - name: Create Release Asset
         run: |
-          tar czf ${{ matrix.artifact_name }}.tar.gz -C peek_tree/src peek_tree
+          tar czf ${{ matrix.artifact_name }}.tar.gz -C ./src peek_tree
 
       - name: Upload Release Asset
         uses: actions/upload-artifact@v4
