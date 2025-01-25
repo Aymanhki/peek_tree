@@ -10,6 +10,6 @@ class PeekTree < Formula
   end
 
   test do
-    system "#{bin}/peek_tree", "-h"
+    system bin/"peek_tree", "-h"
   end
 end
