@@ -30,6 +30,7 @@ jobs:
           git push origin main
 
   build-and-release:
+    needs: update-version
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
