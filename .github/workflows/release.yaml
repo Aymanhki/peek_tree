@@ -40,7 +40,7 @@ jobs:
           sed -i.bak "s|#define VERSION.*|#define VERSION \"$VERSION_TAG\"|" ./src/peek_tree.h
           git add ./src/peek_tree.h
           git commit -m "Update version to $VERSION_TAG"
-          git push 
+          git push origin HEAD
 
       - name: Build
         run: make -C ./src
@@ -63,4 +63,4 @@ jobs:
           sed -i.bak "s|sha256.*|sha256 \"$(shasum -a 256 ./peek_tree-macos.tar.gz | awk '{ print $1 }')\"|" ./dist/Homebrew/peek_tree.rb
           git add ./dist/Homebrew/peek_tree.rb
           git commit -m "Update Homebrew formula for $VERSION_TAG"
-          git push
+          git push origin HEAD
