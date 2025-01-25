@@ -54,7 +54,7 @@ jobs:
           tar czf ${{ matrix.artifact_name }}.tar.gz -C peek_tree/src peek_tree
 
       - name: Upload Release Asset
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.artifact_name }}
           path: ${{ matrix.artifact_name }}.tar.gz
