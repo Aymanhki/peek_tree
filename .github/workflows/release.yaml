@@ -27,19 +27,20 @@ jobs:
           fetch-depth: 0
 
       - name: Set up Git
-        env:
-          GITHUB_TOKEN: ${{ secrets.ACCESS_TOKEN }}
         run: |
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git config --global user.name "github-actions[bot]"
 
-      - name: Update Version in Header File
+      - name: Update Version in Header File and Push
+        if: matrix.os == 'ubuntu-latest'
         run: |
+          git fetch --all
+          git checkout main
           VERSION_TAG=${GITHUB_REF#refs/tags/}
           sed -i.bak "s|#define VERSION.*|#define VERSION \"$VERSION_TAG\"|" ./src/peek_tree.h
           git add ./src/peek_tree.h
           git commit -m "Update version to $VERSION_TAG"
-          git push
+          git push origin main
 
       - name: Build
         run: make -C ./src
