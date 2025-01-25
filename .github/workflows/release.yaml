@@ -44,7 +44,7 @@ jobs:
           git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git
           git add ./src/peek_tree.h
           git commit -m "Update version to ${{ github.ref_name }}"
-          git push
+          git push origin main
 
       - name: Build
         run: make -C peek_tree/src
@@ -106,7 +106,7 @@ jobs:
           sed -i.bak "s|sha256.*|sha256 \"${{ needs.build.outputs.sha256 }}\"|" ./dist/Homebrew/peek_tree.rb
           git add ./dist/Homebrew/peek_tree.rb
           git commit -m "Update Homebrew formula for ${{ github.ref_name }}"
-          git push
+          git push origin main
 
 
 
