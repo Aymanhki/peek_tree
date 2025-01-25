@@ -26,11 +26,11 @@
 #ifndef minor
 #define minor(x) ((unsigned int) (x & 0xFFFFFF))
 #endif
-// ... existing code ...
 
 static int total_dirs = 0;
 static int total_files = 0;
 FILE *output_stream = NULL;
+char *output_file_final_name = NULL;
 
 
 int main(int argc, char *argv[])
@@ -207,6 +207,19 @@ int main(int argc, char *argv[])
                     fprintf(stderr, "%sError opening output file '%s': %s%s\n", COLOR_RED, opts.output_file, strerror(errno), COLOR_RESET);
                     return 1;
                 }
+
+
+                output_file_final_name = strrchr(opts.output_file, '/'); // get the last occurence of '/'
+                if (output_file_final_name == NULL)
+                {
+                    output_file_final_name = opts.output_file;
+                }
+                else
+                {
+                    output_file_final_name++;
+                }
+
+
 
                 fprintf(stdout, "Started printing in file: '%s'\n", opts.output_file);
                 opts.no_color = true;
@@ -467,7 +480,12 @@ bool should_exclude(const char *path, const Options *opts)
     {
         const char *pattern = opts->exclude_patterns[i];
         const char *basename = strrchr(path, '/');
-        basename = basename ? basename + 1 : path;
+        basename = basename ? basename + 1 : path; // get the last occurence of '/'
+
+        if (output_file_final_name != NULL && opts->output_file != NULL && strcmp(basename, output_file_final_name) == 0)
+        {
+            return true;
+        }
 
         if (strcasecmp(basename, pattern) == 0)
         {
