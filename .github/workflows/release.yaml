@@ -25,6 +25,21 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
+      - name: Update Version in Header File
+        run: |
+          # Remove the 'v' prefix from the tag for the sed command
+          VERSION_TAG=${{ github.ref_name }}
+          sed -i.bak "s|#define VERSION.*|#define VERSION \"$VERSION_TAG\"|" peek_tree/src/peek_tree.h
+          rm peek_tree/src/peek_tree.h.bak
+
+      - name: Commit Version Update
+        run: |
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+          git add peek_tree/src/peek_tree.h
+          git commit -m "Update version to ${{ github.ref_name }}"
+          git push
+
       - name: Build
         run: make -C peek_tree/src
 
@@ -58,8 +73,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: v${{ github.run_number }}
-          release_name: Release v${{ github.run_number }}
+          tag_name: ${{ github.ref_name }}
+          release_name: ${{ github.ref_name }}
           draft: false
           prerelease: false
 
@@ -75,17 +90,17 @@ jobs:
 
       - name: Update Homebrew Formula
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # or use PAT: ${{ secrets.PAT_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.ACCESS_TOKEN }}
         run: |
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git config --global user.name "github-actions[bot]"
           # Need to re-checkout with token
           git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git
           git checkout main
-          sed -i.bak "s|url.*|url \"https://github.com/aymanhki/peek_tree/releases/download/v${{ github.run_number }}/peek_tree-macos.tar.gz\"|" ./dist/Homebrew/peek_tree.rb
+          sed -i.bak "s|url.*|url \"https://github.com/aymanhki/peek_tree/releases/download/${{ github.ref_name }}/peek_tree-macos.tar.gz\"|" ./dist/Homebrew/peek_tree.rb
           sed -i.bak "s|sha256.*|sha256 \"${{ needs.build.outputs.sha256 }}\"|" ./dist/Homebrew/peek_tree.rb
           git add ./dist/Homebrew/peek_tree.rb
-          git commit -m "Update Homebrew formula for v${{ github.run_number }}"
+          git commit -m "Update Homebrew formula for ${{ github.ref_name }}"
           git push
 
 
