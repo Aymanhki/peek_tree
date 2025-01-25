@@ -90,8 +90,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.ACCESS_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./peek_tree-linux/peek_tree-linux.tar.gz
-          asset_name: peek_tree-linux.tar.gz
+          asset_path: ./${{ matrix.artifact_name }}.tar.gz
+          asset_name: ${{ matrix.artifact_name }}.tar.gz
           asset_content_type: application/gzip
 
       - name: Update Homebrew Formula
