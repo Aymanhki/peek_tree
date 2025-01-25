@@ -29,22 +29,14 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.ACCESS_TOKEN }}
         run: |
-          git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git
+          git fetch origin main:main
+          git checkout main
           VERSION_TAG=${{ github.ref_name }}
           sed -i.bak "s|#define VERSION.*|#define VERSION \"$VERSION_TAG\"|" ./src/peek_tree.h
           rm -rf ./src/peek_tree.h.bak
-
-      - name: Commit Version Update
-        env:
-          GITHUB_TOKEN: ${{ secrets.ACCESS_TOKEN }}
-        run: |
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git config --global user.name "github-actions[bot]"
           git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git
-          git stash
-          git fetch origin main:main
-          git checkout main
-          git stash pop
           git add ./src/peek_tree.h
           git commit -m "Update version to ${{ github.ref_name }}"
           git push origin main
@@ -107,10 +99,6 @@ jobs:
           git checkout main
           sed -i.bak "s|url.*|url \"https://github.com/aymanhki/peek_tree/releases/download/${{ github.ref_name }}/peek_tree-macos.tar.gz\"|" ./dist/Homebrew/peek_tree.rb
           sed -i.bak "s|sha256.*|sha256 \"${{ needs.build.outputs.sha256 }}\"|" ./dist/Homebrew/peek_tree.rb
-          git stash
-          git fetch origin main:main
-          git checkout main
-          git stash pop
           git add ./dist/Homebrew/peek_tree.rb
           git commit -m "Update Homebrew formula for ${{ github.ref_name }}"
           git push origin main
