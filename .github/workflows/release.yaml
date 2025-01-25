@@ -1,0 +1,71 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - 'dist/**'
+      -
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        include:
+          - os: ubuntu-latest
+            artifact_name: peek_tree-linux
+          - os: macos-latest
+            artifact_name: peek_tree-macos
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Build
+        run: make -C peek_tree/src
+
+      - name: Create Release Asset
+        run: |
+          tar czf ${{ matrix.artifact_name }}.tar.gz -C peek_tree/src peek_tree
+
+      - name: Upload Release Asset
+        uses: actions/upload-artifact@v2
+        with:
+          name: ${{ matrix.artifact_name }}
+          path: ${{ matrix.artifact_name }}.tar.gz
+
+      - name: Calculate SHA256 Checksum
+        if: matrix.os == 'macos-latest'
+        id: checksum
+        run: echo "::set-output name=sha256::$(shasum -a 256 ${{ matrix.artifact_name }}.tar.gz | awk '{ print $1 }')"
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v2
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ github.run_number }}
+          release_name: Release v${{ github.run_number }}
+          draft: false
+          prerelease: false
+
+      - name: Upload Release Assets
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./peek_tree-linux/peek_tree-linux.tar.gz
+          asset_name: peek_tree-linux.tar.gz
+          asset_content_type: application/gzip
+
+
