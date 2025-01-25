@@ -38,8 +38,10 @@ jobs:
         include:
           - os: ubuntu-latest
             artifact_name: peek_tree-linux
+            platform: linux
           - os: macos-latest
             artifact_name: peek_tree-macos
+            platform: macos
 
     steps:
       - uses: actions/checkout@v3
@@ -51,19 +53,29 @@ jobs:
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git config --global user.name "github-actions[bot]"
 
+      - name: Install Build Dependencies (Linux)
+        if: matrix.platform == 'linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang
+
       - name: Build
-        run: make -C ./src
+        run: |
+          cd ./src
+          make clean
+          make
+          file peek_tree
 
       - name: Create Release Asset
         run: tar czf ${{ matrix.artifact_name }}.tar.gz -C ./src peek_tree
 
       - name: Calculate SHA256 Checksum
-        if: matrix.os == 'macos-latest'
+        if: matrix.platform == 'macos'
         id: checksum
         run: echo "::set-output name=sha256::$(shasum -a 256 ${{ matrix.artifact_name }}.tar.gz | awk '{ print $1 }')"
 
       - name: Update Homebrew Formula
-        if: matrix.os == 'macos-latest'
+        if: matrix.platform == 'macos'
         run: |
           git fetch --all
           git checkout main
