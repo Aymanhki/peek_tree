@@ -11,17 +11,8 @@ permissions:
   packages: write
 
 jobs:
-  build:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-latest, macos-latest]
-        include:
-          - os: ubuntu-latest
-            artifact_name: peek_tree-linux
-          - os: macos-latest
-            artifact_name: peek_tree-macos
-
+  update-version:
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
 
@@ -40,6 +31,20 @@ jobs:
           git add ./src/peek_tree.h
           git commit -m "Update version to ${{ github.ref_name }}"
           git push origin main
+  build:
+    needs: update-version
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        include:
+          - os: ubuntu-latest
+            artifact_name: peek_tree-linux
+          - os: macos-latest
+            artifact_name: peek_tree-macos
+
+    steps:
+      - uses: actions/checkout@v2
 
       - name: Build
         run: make -C ./src

@@ -16,7 +16,17 @@
 #include <limits.h>
 #include <locale.h>
 #include <langinfo.h>
+
 #include "peek_tree.h"
+
+#ifndef major
+#define major(x) ((unsigned int) ((x >> 24) & 0xFF))
+#endif
+
+#ifndef minor
+#define minor(x) ((unsigned int) (x & 0xFFFFFF))
+#endif
+// ... existing code ...
 
 static int total_dirs = 0;
 static int total_files = 0;
