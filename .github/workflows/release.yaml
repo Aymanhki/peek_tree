@@ -3,36 +3,14 @@ name: Release
 on:
   push:
     tags:
-        - 'v*'
-
+      - 'v*'
 
 permissions:
   contents: write
   packages: write
 
 jobs:
-  update-version:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-
-      - name: Update Version in Header File
-        env:
-          GITHUB_TOKEN: ${{ secrets.ACCESS_TOKEN }}
-        run: |
-          git fetch origin main:main
-          git checkout main
-          VERSION_TAG=${{ github.ref_name }}
-          sed -i.bak "s|#define VERSION.*|#define VERSION \"$VERSION_TAG\"|" ./src/peek_tree.h
-          rm -rf ./src/peek_tree.h.bak
-          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git config --global user.name "github-actions[bot]"
-          git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git
-          git add ./src/peek_tree.h
-          git commit -m "Update version to ${{ github.ref_name }}"
-          git push origin main
-  build:
-    needs: update-version
+  build-and-release:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -44,72 +22,45 @@ jobs:
             artifact_name: peek_tree-macos
 
     steps:
-      - uses: actions/checkout@v2
-
-      - name: Build
-        run: make -C ./src
-
-      - name: Create Release Asset
-        run: |
-          tar czf ${{ matrix.artifact_name }}.tar.gz -C ./src peek_tree
-
-      - name: Upload Release Asset
-        uses: actions/upload-artifact@v4
+      - uses: actions/checkout@v3
         with:
-          name: ${{ matrix.artifact_name }}
-          path: ${{ matrix.artifact_name }}.tar.gz
+          fetch-depth: 0
 
-      - name: Calculate SHA256 Checksum
-        if: matrix.os == 'macos-latest'
-        id: checksum
-        run: echo "sha256=$(shasum -a 256 ${{ matrix.artifact_name }}.tar.gz | awk '{ print $1 }')" >> $GITHUB_OUTPUT
-
-    outputs:
-      sha256: ${{ steps.checksum.outputs.sha256 }}
-
-  release:
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/download-artifact@v3
-
-      - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.ACCESS_TOKEN }}
-        with:
-          tag_name: ${{ github.ref_name }}
-          release_name: ${{ github.ref_name }}
-          draft: false
-          prerelease: false
-
-      - name: Upload Release Assets
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.ACCESS_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./${{ matrix.artifact_name }}.tar.gz
-          asset_name: ${{ matrix.artifact_name }}.tar.gz
-          asset_content_type: application/gzip
-
-      - name: Update Homebrew Formula
+      - name: Set up Git
         env:
           GITHUB_TOKEN: ${{ secrets.ACCESS_TOKEN }}
         run: |
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git config --global user.name "github-actions[bot]"
           git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git
-          git checkout main
-          sed -i.bak "s|url.*|url \"https://github.com/aymanhki/peek_tree/releases/download/${{ github.ref_name }}/peek_tree-macos.tar.gz\"|" ./dist/Homebrew/peek_tree.rb
-          sed -i.bak "s|sha256.*|sha256 \"${{ needs.build.outputs.sha256 }}\"|" ./dist/Homebrew/peek_tree.rb
+
+      - name: Update Version in Header File
+        run: |
+          VERSION_TAG=${GITHUB_REF#refs/tags/}
+          sed -i.bak "s|#define VERSION.*|#define VERSION \"$VERSION_TAG\"|" ./src/peek_tree.h
+          git add ./src/peek_tree.h
+          git commit -m "Update version to $VERSION_TAG"
+          git push 
+
+      - name: Build
+        run: make -C ./src
+
+      - name: Create Release Asset
+        run: tar czf ${{ matrix.artifact_name }}.tar.gz -C ./src peek_tree
+
+      - name: Create and Upload Release
+        id: create_release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: ${{ matrix.artifact_name }}.tar.gz
+        env:
+          GITHUB_TOKEN: ${{ secrets.ACCESS_TOKEN }}
+
+      - name: Update Homebrew Formula
+        if: matrix.os == 'macos-latest'
+        run: |
+          sed -i.bak "s|url.*|url \"https://github.com/${{ github.repository }}/releases/download/${{ github.ref }}/peek_tree-macos.tar.gz\"|" ./dist/Homebrew/peek_tree.rb
+          sed -i.bak "s|sha256.*|sha256 \"$(shasum -a 256 ./peek_tree-macos.tar.gz | awk '{ print $1 }')\"|" ./dist/Homebrew/peek_tree.rb
           git add ./dist/Homebrew/peek_tree.rb
-          git commit -m "Update Homebrew formula for ${{ github.ref_name }}"
-          git push origin main
-
-
-
-
-
-
+          git commit -m "Update Homebrew formula for $VERSION_TAG"
+          git push
