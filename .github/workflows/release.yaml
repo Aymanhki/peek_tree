@@ -69,23 +69,6 @@ jobs:
       - name: Create Release Asset
         run: tar czf ${{ matrix.artifact_name }}.tar.gz -C ./src peek_tree
 
-      - name: Calculate SHA256 Checksum
-        if: matrix.platform == 'macos'
-        id: checksum
-        run: echo "::set-output name=sha256::$(shasum -a 256 ${{ matrix.artifact_name }}.tar.gz | awk '{ print $1 }')"
-
-      - name: Update Homebrew Formula
-        if: matrix.platform == 'macos'
-        run: |
-          git fetch --all
-          git checkout main
-          VERSION_TAG=${GITHUB_REF#refs/tags/}
-          sed -i.bak "s|url.*|url \"https://github.com/${{ github.repository }}/releases/download/$VERSION_TAG/${{ matrix.artifact_name }}.tar.gz\"|" ./dist/Homebrew/peek_tree.rb
-          sed -i.bak "s|sha256.*|sha256 \"${{ steps.checksum.outputs.sha256 }}\"|" ./dist/Homebrew/peek_tree.rb
-          git add ./dist/Homebrew/peek_tree.rb
-          git commit -m "Update Homebrew formula for $VERSION_TAG"
-          git push origin main
-
       - name: Create and Upload Release
         uses: softprops/action-gh-release@v1
         with:
