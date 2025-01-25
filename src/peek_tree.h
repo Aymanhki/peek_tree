@@ -11,7 +11,7 @@
 #define MAX_LINE_LENGTH 1024
 #define PATH_MAX 4096
 #define MAX_PREVIEW_WIDTH 80
-#define VERSION "v1.1.8"
+#define VERSION "v1.1.9"
 #define COLOR_RESET   "\x1b[0m"
 #define COLOR_BLUE    "\x1b[34m"
 #define COLOR_GREEN   "\x1b[32m"
