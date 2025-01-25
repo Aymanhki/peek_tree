@@ -1,8 +1,8 @@
 class PeekTree < Formula
   desc "Enhanced directory tree viewer with file previews"
   homepage "https://github.com/aymanhki/peek_tree"
-  url "https://github.com/Aymanhki/peek_tree/releases/download/v1.2.1/peek_tree-macos.tar.gz"
-  sha256 "57173c10b43fc26223c154cf5cd219165a715ff27c84dc5a22dfc93cb754187e"
+  url "https://github.com/Aymanhki/peek_tree/releases/download/v1.2.2/peek_tree-macos.tar.gz"
+  sha256 "d0515a4c2aa73f72f4355973a20fe7eddb0b87ee13ab001b78efba41c18c2350"
   license "MIT"
 
   def install
