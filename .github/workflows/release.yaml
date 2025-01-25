@@ -31,8 +31,8 @@ jobs:
         run: |
           git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git
           VERSION_TAG=${{ github.ref_name }}
-          sed -i.bak "s|#define VERSION.*|#define VERSION \"$VERSION_TAG\"|" peek_tree/src/peek_tree.h
-          rm peek_tree/src/peek_tree.h.bak
+          sed -i.bak "s|#define VERSION.*|#define VERSION \"$VERSION_TAG\"|" ./src/peek_tree.h
+          rm -rf ./src/peek_tree.h.bak
 
       - name: Commit Version Update
         env:
@@ -42,7 +42,7 @@ jobs:
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git config --global user.name "github-actions[bot]"
           git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git
-          git add peek_tree/src/peek_tree.h
+          git add ./src/peek_tree.h
           git commit -m "Update version to ${{ github.ref_name }}"
           git push
 
