@@ -2,11 +2,13 @@ name: Release
 
 on:
   push:
-    branches:
-      - main
-    paths-ignore:
-      - 'dist/**'
-      -
+    tags:
+        - 'v*'
+
+
+permissions:
+  contents: write
+  packages: write
 
 jobs:
   build:
@@ -39,7 +41,10 @@ jobs:
       - name: Calculate SHA256 Checksum
         if: matrix.os == 'macos-latest'
         id: checksum
-        run: echo "::set-output name=sha256::$(shasum -a 256 ${{ matrix.artifact_name }}.tar.gz | awk '{ print $1 }')"
+        run: echo "sha256=$(shasum -a 256 ${{ matrix.artifact_name }}.tar.gz | awk '{ print $1 }')" >> $GITHUB_OUTPUT
+
+    outputs:
+      sha256: ${{ steps.checksum.outputs.sha256 }}
 
   release:
     needs: build
@@ -67,5 +72,24 @@ jobs:
           asset_path: ./peek_tree-linux/peek_tree-linux.tar.gz
           asset_name: peek_tree-linux.tar.gz
           asset_content_type: application/gzip
+
+      - name: Update Homebrew Formula
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # or use PAT: ${{ secrets.PAT_TOKEN }}
+        run: |
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+          # Need to re-checkout with token
+          git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git
+          git checkout main
+          sed -i.bak "s|url.*|url \"https://github.com/aymanhki/peek_tree/releases/download/v${{ github.run_number }}/peek_tree-macos.tar.gz\"|" ./dist/Homebrew/peek_tree.rb
+          sed -i.bak "s|sha256.*|sha256 \"${{ needs.build.outputs.sha256 }}\"|" ./dist/Homebrew/peek_tree.rb
+          git add ./dist/Homebrew/peek_tree.rb
+          git commit -m "Update Homebrew formula for v${{ github.run_number }}"
+          git push
+
+
+
+
 
 

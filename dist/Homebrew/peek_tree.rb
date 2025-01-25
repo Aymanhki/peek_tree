@@ -6,7 +6,6 @@ class PeekTree < Formula
   license "MIT"
 
   def install
-    system "make"
     bin.install "peek_tree"
   end
 
