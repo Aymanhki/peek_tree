@@ -10,6 +10,25 @@ permissions:
   packages: write
 
 jobs:
+  update-version:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Set up Git and Update Version
+        run: |
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+          git fetch --all
+          git checkout main
+          VERSION_TAG=${GITHUB_REF#refs/tags/}
+          sed -i.bak "s|#define VERSION.*|#define VERSION \"$VERSION_TAG\"|" ./src/peek_tree.h
+          git add ./src/peek_tree.h
+          git commit -m "Update version to $VERSION_TAG"
+          git push origin main
+
   build-and-release:
     runs-on: ${{ matrix.os }}
     strategy:
